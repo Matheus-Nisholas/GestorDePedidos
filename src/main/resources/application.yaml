@@ -8,6 +8,8 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
+    hibernate:
+      ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
 
