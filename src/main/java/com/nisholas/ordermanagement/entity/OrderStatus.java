@@ -1,4 +1,4 @@
-package com.nisholas.gestao_pedidos.entity;
+package com.nisholas.ordermanagement.entity;
 
 public enum OrderStatus {
     CREATED,

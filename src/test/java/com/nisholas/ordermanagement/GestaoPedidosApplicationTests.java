@@ -1,4 +1,4 @@
-package com.nisholas.gestao_pedidos;
+package com.nisholas.ordermanagement;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,4 +1,4 @@
-package com.nisholas.gestao_pedidos;
+package com.nisholas.ordermanagement;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

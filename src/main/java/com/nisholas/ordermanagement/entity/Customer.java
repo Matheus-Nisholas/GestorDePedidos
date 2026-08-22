@@ -1,10 +1,12 @@
-package com.nisholas.gestao_pedidos.entity;
+package com.nisholas.ordermanagement.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "client")
+@Table(name = "customers")
 @Getter
 @Setter
 public class Customer {
@@ -15,6 +17,9 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column()
+    private String email;
+
     @Column(length = 100, nullable = false)
     private String name;
 
@@ -23,9 +28,9 @@ public class Customer {
 
     private boolean active;
 
-    private String createdAt;
+    private LocalDateTime createdAt;
 
-    private String updatedAt;
+    private LocalDateTime updatedAt;
 
 
 
