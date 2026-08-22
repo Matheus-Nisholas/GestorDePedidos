@@ -24,7 +24,7 @@ public class Customer {
     private String name;
 
     @Column(length = 11)
-    private int phone;
+    private String phone;
 
     private boolean active;
 
