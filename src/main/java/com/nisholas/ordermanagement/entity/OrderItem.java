@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "orders")
 @Getter
 @Setter
-public class Order {
+public class OrderItem {
 
     //id (identificador), customer (cliente), status (situação), totalAmount (valor total), createdAt (criado em), updatedAt (atualizado em)
 
