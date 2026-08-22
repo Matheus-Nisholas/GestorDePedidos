@@ -14,7 +14,7 @@ public class Order {
     private String name;
 
     @OneToMany
-    private Client customer;
+    private Customer customer;
 
     private boolean status;
 

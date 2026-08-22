@@ -7,7 +7,7 @@ import lombok.*;
 @Table(name = "client")
 @Getter
 @Setter
-public class Client {
+public class Customer {
 
     //id (identificador), name (nome), email (e-mail), phone (telefone), active (ativo), createdAt (criado em), updatedAt (atualizado em)
 
