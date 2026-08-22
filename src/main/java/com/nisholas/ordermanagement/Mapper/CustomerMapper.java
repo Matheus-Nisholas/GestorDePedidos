@@ -8,7 +8,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class CustomerMapper {
 
-    public static Customer toCustumer (CustomerRequest customerRequest){
+    public static Customer toCustomer(CustomerRequest customerRequest){
         return Customer
                 .builder()
                 .name(customerRequest.name())

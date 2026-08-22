@@ -32,7 +32,7 @@ public class CustumerController {
 
     @PostMapping
     public ResponseEntity<CustomerResponse> saveCustomer(@RequestBody CustomerRequest request) {
-        Customer newCustomer = CustomerMapper.toCustumer(request);
+        Customer newCustomer = CustomerMapper.toCustomer(request);
         Customer savedCustomer = customerService.saveCustomer(newCustomer);
         return ResponseEntity.status(HttpStatus.CREATED).body(CustomerMapper.toCustomerResponse(savedCustomer));
 
