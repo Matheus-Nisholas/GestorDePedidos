@@ -5,13 +5,14 @@ import com.nisholas.ordermanagement.entity.Customer;
 import com.nisholas.ordermanagement.exception.EmailAlreadyExistsException;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
+import com.nisholas.ordermanagement.request.CustomerPatchRequest;
 import com.nisholas.ordermanagement.request.CustomerRequest;
 import com.nisholas.ordermanagement.response.CustomerResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +29,8 @@ public class CustomerService {
             throw new EmailAlreadyExistsException(
                     "Email already registered: " + customer.getEmail()
             );
-        } else {
-            return customerRepository.save(customer);
         }
+        return customerRepository.save(customer);
     }
 
     public CustomerResponse getByCustomerId(Long id) {
@@ -72,5 +72,29 @@ public class CustomerService {
 
         return customerRepository.save(existingCustomer);
 
+    }
+
+    public Customer patchCustomer(Long id, @Valid CustomerPatchRequest request) {
+        Customer existingCustomer = customerRepository.findById(id).
+                orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer not found with id: " + id)
+                );
+
+        if (request.email() != null) {
+            existingCustomer.setEmail(request.email());
+        }
+
+        if (request.name() != null) {
+            existingCustomer.setName(request.name());
+        }
+
+        if (request.phone() != null) {
+            existingCustomer.setPhone(request.phone());
+        }
+
+        if (request.active() != null) {
+            existingCustomer.setActive(request.active());
+        }
+        return customerRepository.save(existingCustomer);
     }
 }
