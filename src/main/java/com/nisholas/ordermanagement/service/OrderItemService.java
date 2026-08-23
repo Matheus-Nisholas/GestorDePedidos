@@ -9,6 +9,7 @@ import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.OrderItemRepository;
 import com.nisholas.ordermanagement.repository.OrderRepository;
 import com.nisholas.ordermanagement.repository.ProductRepository;
+import com.nisholas.ordermanagement.request.OrderItemPatchRequest;
 import com.nisholas.ordermanagement.request.OrderItemRequest;
 import com.nisholas.ordermanagement.response.OrderItemResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,34 +32,19 @@ public class OrderItemService {
     }
 
     public OrderItemResponse getByOrderItemId(Long id) {
-        OrderItem orderItem = orderItemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order item not found with id: " + id
-                ));
-
+        OrderItem orderItem = findOrderItem(id);
         return OrderItemMapper.toOrderItemResponse(orderItem);
     }
 
     @Transactional
     public OrderItem saveOrderItem(OrderItemRequest request) {
-        Order order = orderRepository.findById(request.orderId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with id: " + request.orderId()
-                ));
+        Order order = findOrder(request.orderId());
+        Product product = findProduct(request.productId());
 
-        Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Product not found with id: " + request.productId()
-                ));
-
-        if (product.getStockQuantity() < request.quantity()) {
-            throw new InsufficientStockException(
-                    "Insufficient stock for product id: " + product.getId()
-            );
-        }
+        validateStock(product, request.quantity());
 
         BigDecimal unitPrice = product.getPrice();
-        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(request.quantity()));
+        BigDecimal subtotal = calculateSubtotal(unitPrice, request.quantity());
 
         OrderItem orderItem = OrderItem.builder()
                 .order(order)
@@ -78,22 +64,131 @@ public class OrderItemService {
     }
 
     @Transactional
+    public OrderItem putByOrderItemId(Long id, OrderItemRequest request) {
+        OrderItem existingItem = findOrderItem(id);
+
+        restoreOldItem(existingItem);
+
+        Order newOrder = findOrder(request.orderId());
+        Product newProduct = findProduct(request.productId());
+
+        validateStock(newProduct, request.quantity());
+
+        BigDecimal unitPrice = newProduct.getPrice();
+        BigDecimal subtotal = calculateSubtotal(unitPrice, request.quantity());
+
+        newProduct.setStockQuantity(newProduct.getStockQuantity() - request.quantity());
+        newOrder.setTotalAmount(newOrder.getTotalAmount().add(subtotal));
+
+        existingItem.setOrder(newOrder);
+        existingItem.setProduct(newProduct);
+        existingItem.setQuantity(request.quantity());
+        existingItem.setUnitPrice(unitPrice);
+        existingItem.setSubtotal(subtotal);
+
+        productRepository.save(newProduct);
+        orderRepository.save(newOrder);
+
+        return orderItemRepository.save(existingItem);
+    }
+
+    @Transactional
+    public OrderItem patchOrderItem(Long id, OrderItemPatchRequest request) {
+        OrderItem existingItem = findOrderItem(id);
+
+        Long orderId = request.orderId() != null
+                ? request.orderId()
+                : existingItem.getOrder().getId();
+
+        Long productId = request.productId() != null
+                ? request.productId()
+                : existingItem.getProduct().getId();
+
+        int quantity = request.quantity() != null
+                ? request.quantity()
+                : existingItem.getQuantity();
+
+        restoreOldItem(existingItem);
+
+        Order newOrder = findOrder(orderId);
+        Product newProduct = findProduct(productId);
+
+        validateStock(newProduct, quantity);
+
+        BigDecimal unitPrice = newProduct.getPrice();
+        BigDecimal subtotal = calculateSubtotal(unitPrice, quantity);
+
+        newProduct.setStockQuantity(newProduct.getStockQuantity() - quantity);
+        newOrder.setTotalAmount(newOrder.getTotalAmount().add(subtotal));
+
+        existingItem.setOrder(newOrder);
+        existingItem.setProduct(newProduct);
+        existingItem.setQuantity(quantity);
+        existingItem.setUnitPrice(unitPrice);
+        existingItem.setSubtotal(subtotal);
+
+        productRepository.save(newProduct);
+        orderRepository.save(newOrder);
+
+        return orderItemRepository.save(existingItem);
+    }
+
+    @Transactional
     public OrderItemResponse deleteByOrderItemId(Long id) {
-        OrderItem orderItem = orderItemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order item not found with id: " + id
-                ));
+        OrderItem orderItem = findOrderItem(id);
 
-        Product product = orderItem.getProduct();
-        Order order = orderItem.getOrder();
-
-        product.setStockQuantity(product.getStockQuantity() + orderItem.getQuantity());
-        order.setTotalAmount(order.getTotalAmount().subtract(orderItem.getSubtotal()));
-
-        productRepository.save(product);
-        orderRepository.save(order);
+        restoreOldItem(orderItem);
         orderItemRepository.delete(orderItem);
 
         return OrderItemMapper.toOrderItemResponse(orderItem);
+    }
+
+    private OrderItem findOrderItem(Long id) {
+        return orderItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order item not found with id: " + id
+                ));
+    }
+
+    private Order findOrder(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + id
+                ));
+    }
+
+    private Product findProduct(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Product not found with id: " + id
+                ));
+    }
+
+    private void validateStock(Product product, int quantity) {
+        if (product.getStockQuantity() < quantity) {
+            throw new InsufficientStockException(
+                    "Insufficient stock for product id: " + product.getId()
+            );
+        }
+    }
+
+    private BigDecimal calculateSubtotal(BigDecimal unitPrice, int quantity) {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    private void restoreOldItem(OrderItem orderItem) {
+        Product oldProduct = orderItem.getProduct();
+        Order oldOrder = orderItem.getOrder();
+
+        oldProduct.setStockQuantity(
+                oldProduct.getStockQuantity() + orderItem.getQuantity()
+        );
+
+        oldOrder.setTotalAmount(
+                oldOrder.getTotalAmount().subtract(orderItem.getSubtotal())
+        );
+
+        productRepository.save(oldProduct);
+        orderRepository.save(oldOrder);
     }
 }
