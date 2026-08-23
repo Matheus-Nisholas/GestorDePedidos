@@ -2,6 +2,7 @@ package com.nisholas.ordermanagement.controller;
 
 import com.nisholas.ordermanagement.request.LoginRequest;
 import com.nisholas.ordermanagement.request.RegisterRequest;
+import com.nisholas.ordermanagement.response.LoginResponse;
 import com.nisholas.ordermanagement.response.UserResponse;
 import com.nisholas.ordermanagement.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,14 +47,14 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(
             summary = "Realizar login",
-            description = "Valida e-mail e senha do usuário utilizando o hash BCrypt armazenado no banco. Nesta etapa ainda não gera JWT."
+            description = "Valida e-mail e senha com BCrypt e, quando as credenciais são válidas, gera um token JWT."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Credenciais válidas"),
+            @ApiResponse(responseCode = "200", description = "Login realizado e JWT gerado"),
             @ApiResponse(responseCode = "400", description = "Dados de login inválidos"),
             @ApiResponse(responseCode = "401", description = "E-mail ou senha incorretos")
     })
-    public ResponseEntity<UserResponse> login(
+    public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(authService.login(request));
