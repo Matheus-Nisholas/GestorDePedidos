@@ -8,6 +8,7 @@ import com.nisholas.ordermanagement.exception.InvalidCredentialsException;
 import com.nisholas.ordermanagement.repository.UserRepository;
 import com.nisholas.ordermanagement.request.LoginRequest;
 import com.nisholas.ordermanagement.request.RegisterRequest;
+import com.nisholas.ordermanagement.response.LoginResponse;
 import com.nisholas.ordermanagement.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +20,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -39,7 +41,7 @@ public class AuthService {
         return UserMapper.toUserResponse(savedUser);
     }
 
-    public UserResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new InvalidCredentialsException(
                         "Invalid email or password"
@@ -52,6 +54,13 @@ public class AuthService {
             );
         }
 
-        return UserMapper.toUserResponse(user);
+        String token = jwtService.generateToken(user);
+
+        return LoginResponse.builder()
+                .token(token)
+                .type("Bearer")
+                .expiresInHours(jwtService.getExpirationHours())
+                .user(UserMapper.toUserResponse(user))
+                .build();
     }
 }
