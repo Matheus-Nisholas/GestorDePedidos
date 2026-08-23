@@ -1,9 +1,12 @@
 package com.nisholas.ordermanagement.service;
 
+import com.nisholas.ordermanagement.Mapper.UserMapper;
 import com.nisholas.ordermanagement.entity.Role;
 import com.nisholas.ordermanagement.entity.User;
 import com.nisholas.ordermanagement.exception.EmailAlreadyExistsException;
+import com.nisholas.ordermanagement.exception.InvalidCredentialsException;
 import com.nisholas.ordermanagement.repository.UserRepository;
+import com.nisholas.ordermanagement.request.LoginRequest;
 import com.nisholas.ordermanagement.request.RegisterRequest;
 import com.nisholas.ordermanagement.response.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,11 +36,22 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return UserResponse.builder()
-                .id(savedUser.getId())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .active(savedUser.isActive())
-                .build();
+        return UserMapper.toUserResponse(savedUser);
+    }
+
+    public UserResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new InvalidCredentialsException(
+                        "Invalid email or password"
+                ));
+
+        if (!user.isActive() ||
+                !passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        return UserMapper.toUserResponse(user);
     }
 }
