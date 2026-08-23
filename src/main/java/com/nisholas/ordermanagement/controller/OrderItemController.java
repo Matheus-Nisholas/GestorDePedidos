@@ -2,6 +2,7 @@ package com.nisholas.ordermanagement.controller;
 
 import com.nisholas.ordermanagement.Mapper.OrderItemMapper;
 import com.nisholas.ordermanagement.entity.OrderItem;
+import com.nisholas.ordermanagement.request.OrderItemPatchRequest;
 import com.nisholas.ordermanagement.request.OrderItemRequest;
 import com.nisholas.ordermanagement.response.OrderItemResponse;
 import com.nisholas.ordermanagement.service.OrderItemService;
@@ -44,6 +45,30 @@ public class OrderItemController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(OrderItemMapper.toOrderItemResponse(orderItem));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderItemResponse> putByOrderItemId(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderItemRequest request) {
+
+        OrderItem orderItem = orderItemService.putByOrderItemId(id, request);
+
+        return ResponseEntity.ok(
+                OrderItemMapper.toOrderItemResponse(orderItem)
+        );
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<OrderItemResponse> patchOrderItem(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderItemPatchRequest request) {
+
+        OrderItem orderItem = orderItemService.patchOrderItem(id, request);
+
+        return ResponseEntity.ok(
+                OrderItemMapper.toOrderItemResponse(orderItem)
+        );
     }
 
     @DeleteMapping("/{id}")
