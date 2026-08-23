@@ -3,8 +3,10 @@ package com.nisholas.ordermanagement.service;
 import com.nisholas.ordermanagement.Mapper.OrderItemMapper;
 import com.nisholas.ordermanagement.entity.Order;
 import com.nisholas.ordermanagement.entity.OrderItem;
+import com.nisholas.ordermanagement.entity.OrderStatus;
 import com.nisholas.ordermanagement.entity.Product;
 import com.nisholas.ordermanagement.exception.InsufficientStockException;
+import com.nisholas.ordermanagement.exception.InvalidOrderStatusException;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.OrderItemRepository;
 import com.nisholas.ordermanagement.repository.OrderRepository;
@@ -39,8 +41,9 @@ public class OrderItemService {
     @Transactional
     public OrderItem saveOrderItem(OrderItemRequest request) {
         Order order = findOrder(request.orderId());
-        Product product = findProduct(request.productId());
+        validateOrderAllowsItemChanges(order);
 
+        Product product = findProduct(request.productId());
         validateStock(product, request.quantity());
 
         BigDecimal unitPrice = product.getPrice();
@@ -66,12 +69,14 @@ public class OrderItemService {
     @Transactional
     public OrderItem putByOrderItemId(Long id, OrderItemRequest request) {
         OrderItem existingItem = findOrderItem(id);
+        validateOrderAllowsItemChanges(existingItem.getOrder());
+
+        Order newOrder = findOrder(request.orderId());
+        validateOrderAllowsItemChanges(newOrder);
 
         restoreOldItem(existingItem);
 
-        Order newOrder = findOrder(request.orderId());
         Product newProduct = findProduct(request.productId());
-
         validateStock(newProduct, request.quantity());
 
         BigDecimal unitPrice = newProduct.getPrice();
@@ -95,6 +100,7 @@ public class OrderItemService {
     @Transactional
     public OrderItem patchOrderItem(Long id, OrderItemPatchRequest request) {
         OrderItem existingItem = findOrderItem(id);
+        validateOrderAllowsItemChanges(existingItem.getOrder());
 
         Long orderId = request.orderId() != null
                 ? request.orderId()
@@ -108,11 +114,12 @@ public class OrderItemService {
                 ? request.quantity()
                 : existingItem.getQuantity();
 
+        Order newOrder = findOrder(orderId);
+        validateOrderAllowsItemChanges(newOrder);
+
         restoreOldItem(existingItem);
 
-        Order newOrder = findOrder(orderId);
         Product newProduct = findProduct(productId);
-
         validateStock(newProduct, quantity);
 
         BigDecimal unitPrice = newProduct.getPrice();
@@ -136,6 +143,7 @@ public class OrderItemService {
     @Transactional
     public OrderItemResponse deleteByOrderItemId(Long id) {
         OrderItem orderItem = findOrderItem(id);
+        validateOrderAllowsItemChanges(orderItem.getOrder());
 
         restoreOldItem(orderItem);
         orderItemRepository.delete(orderItem);
@@ -162,6 +170,14 @@ public class OrderItemService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Product not found with id: " + id
                 ));
+    }
+
+    private void validateOrderAllowsItemChanges(Order order) {
+        if (order.getStatus() != OrderStatus.CREATED) {
+            throw new InvalidOrderStatusException(
+                    "Order items can only be modified while order status is CREATED"
+            );
+        }
     }
 
     private void validateStock(Product product, int quantity) {
