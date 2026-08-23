@@ -1,5 +1,6 @@
 package com.nisholas.ordermanagement.controller;
 
+import com.nisholas.ordermanagement.request.LoginRequest;
 import com.nisholas.ordermanagement.request.RegisterRequest;
 import com.nisholas.ordermanagement.response.UserResponse;
 import com.nisholas.ordermanagement.service.AuthService;
@@ -27,7 +28,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(
             summary = "Cadastrar usuário",
-            description = "Cria um novo usuário com perfil USER e armazena a senha criptografada com BCrypt."
+            description = "Cria um novo usuário com perfil USER e armazena a senha com BCrypt."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Usuário cadastrado com sucesso"),
@@ -40,5 +41,21 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(authService.register(request));
+    }
+
+    @PostMapping("/login")
+    @Operation(
+            summary = "Realizar login",
+            description = "Valida e-mail e senha do usuário utilizando o hash BCrypt armazenado no banco. Nesta etapa ainda não gera JWT."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credenciais válidas"),
+            @ApiResponse(responseCode = "400", description = "Dados de login inválidos"),
+            @ApiResponse(responseCode = "401", description = "E-mail ou senha incorretos")
+    })
+    public ResponseEntity<UserResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        return ResponseEntity.ok(authService.login(request));
     }
 }
