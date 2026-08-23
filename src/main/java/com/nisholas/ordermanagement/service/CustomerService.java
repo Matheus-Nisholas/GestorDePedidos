@@ -74,14 +74,21 @@ public class CustomerService {
 
     }
 
-    public Customer patchCustomer(Long id, @Valid CustomerPatchRequest request) {
+    public Customer patchCustomer(Long id, CustomerPatchRequest request) {
         Customer existingCustomer = customerRepository.findById(id).
                 orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id: " + id)
                 );
 
-        if (request.email() != null) {
-            existingCustomer.setEmail(request.email());
+        if (request.email() != null &&
+        customerRepository.existsByEmailAndIdNot(request.email(), id)) {
+            throw new EmailAlreadyExistsException(
+                    "Email already registered: " + request.email()
+            );
+        }
+
+        if (request.phone() != null) {
+            existingCustomer.setPhone(request.phone());
         }
 
         if (request.name() != null) {
