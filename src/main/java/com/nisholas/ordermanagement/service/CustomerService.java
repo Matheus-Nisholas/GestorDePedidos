@@ -37,18 +37,21 @@ public class CustomerService {
     }
 
     public CustomerResponse deleteByCustomerId(Long id) {
-        Optional<Customer> optionalCustomer = customerRepository.findById(id);
-        if (optionalCustomer.isPresent()) {
-            customerRepository.deleteById(id);
-            return CustomerMapper.toCustomerResponse(optionalCustomer.get());
-        } else {
-            return null;
-        }
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Customer not found with id: " + id
+                        )
+                );
+        customerRepository.deleteById(id);
+        return CustomerMapper.toCustomerResponse(customer);
     }
 
     public Customer putByCustomerId(Long id, CustomerRequest customerRequest) {
         Customer existingCustomer = customerRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer not found with id: " + id
+                ));
 
         existingCustomer.setName(customerRequest.name());
         existingCustomer.setEmail(customerRequest.email());

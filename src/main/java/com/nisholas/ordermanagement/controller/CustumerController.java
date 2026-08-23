@@ -6,6 +6,7 @@ import com.nisholas.ordermanagement.entity.Customer;
 import com.nisholas.ordermanagement.request.CustomerRequest;
 import com.nisholas.ordermanagement.response.CustomerResponse;
 import com.nisholas.ordermanagement.service.CustomerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class CustumerController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomerResponse> saveCustomer(@RequestBody CustomerRequest request) {
+    public ResponseEntity<CustomerResponse> saveCustomer(@Valid @RequestBody CustomerRequest request) {
         Customer newCustomer = CustomerMapper.toCustomer(request);
         Customer savedCustomer = customerService.saveCustomer(newCustomer);
         return ResponseEntity.status(HttpStatus.CREATED).body(CustomerMapper.toCustomerResponse(savedCustomer));
