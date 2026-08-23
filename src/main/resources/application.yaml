@@ -15,3 +15,7 @@ spring:
 
   flyway:
     enabled: true
+
+jwt:
+  secret: ${JWT_SECRET:gestao-pedidos-dev-secret-key-change-in-production-2026}
+  expiration-hours: 2
