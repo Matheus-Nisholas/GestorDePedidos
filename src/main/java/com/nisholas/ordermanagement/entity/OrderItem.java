@@ -5,30 +5,31 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "order_items")
 @Getter
 @Setter
 public class OrderItem {
-
-    //id (identificador), customer (cliente), status (situação), totalAmount (valor total), createdAt (criado em), updatedAt (atualizado em)
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
-    private BigDecimal totalAmount;
+    @Column(nullable = false)
+    private int quantity;
 
-    private LocalDateTime createdAt;
+    @Column(name = "unit_price", nullable = false, precision = 19, scale = 2)
+    private BigDecimal unitPrice;
 
-    private LocalDateTime updatedAt;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal subtotal;
 }
