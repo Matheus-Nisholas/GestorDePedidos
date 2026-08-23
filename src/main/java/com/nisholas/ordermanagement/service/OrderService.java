@@ -6,6 +6,7 @@ import com.nisholas.ordermanagement.entity.Order;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
 import com.nisholas.ordermanagement.repository.OrderRepository;
+import com.nisholas.ordermanagement.request.OrderPatchRequest;
 import com.nisholas.ordermanagement.request.OrderRequest;
 import com.nisholas.ordermanagement.response.OrderResponse;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,27 @@ public class OrderService {
 
         existingOrder.setCustomer(customer);
         existingOrder.setStatus(orderRequest.status());
+
+        return orderRepository.save(existingOrder);
+    }
+
+    public Order patchOrder(Long id, OrderPatchRequest request) {
+        Order existingOrder = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Order not found with id: " + id
+                ));
+
+        if (request.customerId() != null) {
+            Customer customer = customerRepository.findById(request.customerId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Customer not found with id: " + request.customerId()
+                    ));
+            existingOrder.setCustomer(customer);
+        }
+
+        if (request.status() != null) {
+            existingOrder.setStatus(request.status());
+        }
 
         return orderRepository.save(existingOrder);
     }
