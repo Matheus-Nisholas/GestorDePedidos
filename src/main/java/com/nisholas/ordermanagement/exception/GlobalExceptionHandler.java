@@ -34,4 +34,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(exception.getMessage());
     }
+
+    @ExceptionHandler(InvalidOrderStatusException.class)
+    public ResponseEntity<String> handleInvalidOrderStatusException(
+            InvalidOrderStatusException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(exception.getMessage());
+    }
 }
