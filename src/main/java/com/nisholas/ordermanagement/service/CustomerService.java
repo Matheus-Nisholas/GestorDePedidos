@@ -2,6 +2,7 @@ package com.nisholas.ordermanagement.service;
 
 import com.nisholas.ordermanagement.Mapper.CustomerMapper;
 import com.nisholas.ordermanagement.entity.Customer;
+import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
 import com.nisholas.ordermanagement.request.CustomerRequest;
 import com.nisholas.ordermanagement.response.CustomerResponse;
@@ -26,12 +27,13 @@ public class CustomerService {
     }
 
     public CustomerResponse getByCustomerId(Long id) {
-        Optional<Customer> optionalCustomer = customerRepository.findById(id);
-        if (optionalCustomer.isPresent()) {
-            return CustomerMapper.toCustomerResponse(optionalCustomer.get());
-        } else {
-            return null;
-        }
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Customer not found with id: " + id
+                        )
+                );
+        return CustomerMapper.toCustomerResponse(customer);
     }
 
     public CustomerResponse deleteByCustomerId(Long id) {
