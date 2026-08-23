@@ -48,7 +48,7 @@ public class CustumerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerResponse> putByCustomerId(@PathVariable Long id, @RequestBody CustomerRequest request) {
+    public ResponseEntity<CustomerResponse> putByCustomerId(@PathVariable Long id,@Valid @RequestBody CustomerRequest request) {
         Customer customer = customerService.putByCustomerId(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(CustomerMapper.toCustomerResponse(customer));
     }
