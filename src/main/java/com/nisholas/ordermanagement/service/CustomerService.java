@@ -2,6 +2,7 @@ package com.nisholas.ordermanagement.service;
 
 import com.nisholas.ordermanagement.Mapper.CustomerMapper;
 import com.nisholas.ordermanagement.entity.Customer;
+import com.nisholas.ordermanagement.exception.EmailAlreadyExistsException;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
 import com.nisholas.ordermanagement.request.CustomerRequest;
@@ -23,7 +24,13 @@ public class CustomerService {
     }
 
     public Customer saveCustomer(Customer customer) {
-        return customerRepository.save(customer);
+        if (customerRepository.existsByEmail(customer.getEmail())) {
+            throw new EmailAlreadyExistsException(
+                    "Email already registered: " + customer.getEmail()
+            );
+        } else {
+            return customerRepository.save(customer);
+        }
     }
 
     public CustomerResponse getByCustomerId(Long id) {
@@ -53,6 +60,11 @@ public class CustomerService {
                         "Customer not found with id: " + id
                 ));
 
+        if (customerRepository.existsByEmailAndIdNot(customerRequest.email(), id)) {
+            throw new EmailAlreadyExistsException(
+                    "Email already registered: " + customerRequest.email()
+            );
+        }
         existingCustomer.setName(customerRequest.name());
         existingCustomer.setEmail(customerRequest.email());
         existingCustomer.setPhone(customerRequest.phone());
