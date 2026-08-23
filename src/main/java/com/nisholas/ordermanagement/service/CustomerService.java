@@ -3,6 +3,7 @@ package com.nisholas.ordermanagement.service;
 import com.nisholas.ordermanagement.Mapper.CustomerMapper;
 import com.nisholas.ordermanagement.entity.Customer;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
+import com.nisholas.ordermanagement.request.CustomerRequest;
 import com.nisholas.ordermanagement.response.CustomerResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,13 +34,26 @@ public class CustomerService {
         }
     }
 
-    public CustomerResponse deleteByCustomerId(Long id){
+    public CustomerResponse deleteByCustomerId(Long id) {
         Optional<Customer> optionalCustomer = customerRepository.findById(id);
-        if (optionalCustomer.isPresent()){
+        if (optionalCustomer.isPresent()) {
             customerRepository.deleteById(id);
             return CustomerMapper.toCustomerResponse(optionalCustomer.get());
         } else {
             return null;
         }
+    }
+
+    public Customer putByCustomerId(Long id, CustomerRequest customerRequest) {
+        Customer existingCustomer = customerRepository.findById(id)
+                .orElseThrow();
+
+        existingCustomer.setName(customerRequest.name());
+        existingCustomer.setEmail(customerRequest.email());
+        existingCustomer.setPhone(customerRequest.phone());
+        existingCustomer.setActive(customerRequest.active());
+
+        return customerRepository.save(existingCustomer);
+
     }
 }

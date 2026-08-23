@@ -24,9 +24,7 @@ public class CustumerController {
     @GetMapping()
     public ResponseEntity<List<CustomerResponse>> getAllCustumers() {
         List<Customer> customers = customerService.findAll();
-        List<CustomerResponse> list = customers.stream()
-                .map(customer -> CustomerMapper.toCustomerResponse(customer))
-                .toList();
+        List<CustomerResponse> list = customers.stream().map(customer -> CustomerMapper.toCustomerResponse(customer)).toList();
         return ResponseEntity.ok(list);
     }
 
@@ -49,7 +47,8 @@ public class CustumerController {
     }
 
     @PutMapping("/{id}")
-    public Customer putByCustomerId(@PathVariable Long id, @RequestBody CustomerRequest request) {
-        return null;
+    public ResponseEntity<CustomerResponse> putByCustomerId(@PathVariable Long id, @RequestBody CustomerRequest request) {
+        Customer customer = customerService.putByCustomerId(id, request);
+        return ResponseEntity.status(HttpStatus.OK).body(CustomerMapper.toCustomerResponse(customer));
     }
 }
