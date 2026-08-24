@@ -83,6 +83,7 @@ class OrderItemServiceTest {
                 .id(1L)
                 .price(new BigDecimal("100.00"))
                 .stockQuantity(1)
+                .active(true)
                 .build();
 
         OrderItemRequest request = new OrderItemRequest(1L, 1L, 5);
