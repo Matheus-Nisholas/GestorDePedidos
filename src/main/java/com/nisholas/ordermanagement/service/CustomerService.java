@@ -8,7 +8,6 @@ import com.nisholas.ordermanagement.repository.CustomerRepository;
 import com.nisholas.ordermanagement.request.CustomerPatchRequest;
 import com.nisholas.ordermanagement.request.CustomerRequest;
 import com.nisholas.ordermanagement.response.CustomerResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,21 +34,17 @@ public class CustomerService {
 
     public CustomerResponse getByCustomerId(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found with id: " + id
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer not found with id: " + id
+                ));
         return CustomerMapper.toCustomerResponse(customer);
     }
 
     public CustomerResponse deleteByCustomerId(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Customer not found with id: " + id
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer not found with id: " + id
+                ));
         customerRepository.deleteById(id);
         return CustomerMapper.toCustomerResponse(customer);
     }
@@ -65,30 +60,28 @@ public class CustomerService {
                     "Email already registered: " + customerRequest.email()
             );
         }
+
         existingCustomer.setName(customerRequest.name());
         existingCustomer.setEmail(customerRequest.email());
         existingCustomer.setPhone(customerRequest.phone());
         existingCustomer.setActive(customerRequest.active());
 
         return customerRepository.save(existingCustomer);
-
     }
 
     public Customer patchCustomer(Long id, CustomerPatchRequest request) {
-        Customer existingCustomer = customerRepository.findById(id).
-                orElseThrow(() -> new ResourceNotFoundException(
-                        "Customer not found with id: " + id)
+        Customer existingCustomer = customerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Customer not found with id: " + id
+                ));
+
+        if (request.email() != null) {
+            if (customerRepository.existsByEmailAndIdNot(request.email(), id)) {
+                throw new EmailAlreadyExistsException(
+                        "Email already registered: " + request.email()
                 );
-
-        if (request.email() != null &&
-        customerRepository.existsByEmailAndIdNot(request.email(), id)) {
-            throw new EmailAlreadyExistsException(
-                    "Email already registered: " + request.email()
-            );
-        }
-
-        if (request.phone() != null) {
-            existingCustomer.setPhone(request.phone());
+            }
+            existingCustomer.setEmail(request.email());
         }
 
         if (request.name() != null) {
@@ -102,6 +95,7 @@ public class CustomerService {
         if (request.active() != null) {
             existingCustomer.setActive(request.active());
         }
+
         return customerRepository.save(existingCustomer);
     }
 }
