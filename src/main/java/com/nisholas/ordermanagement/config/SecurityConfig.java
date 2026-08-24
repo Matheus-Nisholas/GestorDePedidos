@@ -1,26 +1,27 @@
 package com.nisholas.ordermanagement.config;
 
+import com.nisholas.ordermanagement.security.CustomAccessDeniedHandler;
+import com.nisholas.ordermanagement.security.CustomAuthenticationEntryPoint;
 import com.nisholas.ordermanagement.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -29,16 +30,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        AccessDeniedHandlerImpl accessDeniedHandler = new AccessDeniedHandlerImpl();
-        accessDeniedHandler.setErrorPage(null);
-
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(authorize -> authorize
@@ -49,12 +47,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/error"
                         ).permitAll()
-
-                        // Produtos podem ser consultados por USER e ADMIN.
                         .requestMatchers(HttpMethod.GET, "/products", "/products/**")
                         .hasAnyRole("USER", "ADMIN")
-
-                        // Cadastro e manutencao de produtos ficam restritos ao ADMIN.
                         .requestMatchers(HttpMethod.POST, "/products", "/products/**")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/products", "/products/**")
@@ -63,8 +57,6 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/products", "/products/**")
                         .hasRole("ADMIN")
-
-                        // Demais recursos exigem apenas usuario autenticado.
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
