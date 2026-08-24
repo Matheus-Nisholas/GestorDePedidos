@@ -4,6 +4,7 @@ import com.nisholas.ordermanagement.entity.Customer;
 import com.nisholas.ordermanagement.exception.EmailAlreadyExistsException;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.CustomerRepository;
+import com.nisholas.ordermanagement.request.CustomerPatchRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -67,5 +68,31 @@ class CustomerServiceTest {
                 ResourceNotFoundException.class,
                 () -> customerService.getByCustomerId(99L)
         );
+    }
+
+    @Test
+    void shouldUpdateEmailOnPatch() {
+        Customer customer = Customer.builder()
+                .id(1L)
+                .name("Matheus")
+                .email("antigo@email.com")
+                .active(true)
+                .build();
+
+        CustomerPatchRequest request = new CustomerPatchRequest(
+                null,
+                "novo@email.com",
+                null,
+                null
+        );
+
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(customerRepository.existsByEmailAndIdNot("novo@email.com", 1L)).thenReturn(false);
+        when(customerRepository.save(customer)).thenReturn(customer);
+
+        Customer updatedCustomer = customerService.patchCustomer(1L, request);
+
+        assertEquals("novo@email.com", updatedCustomer.getEmail());
+        verify(customerRepository).save(customer);
     }
 }
