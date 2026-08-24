@@ -7,6 +7,7 @@ import com.nisholas.ordermanagement.entity.OrderStatus;
 import com.nisholas.ordermanagement.entity.Product;
 import com.nisholas.ordermanagement.exception.InsufficientStockException;
 import com.nisholas.ordermanagement.exception.InvalidOrderStatusException;
+import com.nisholas.ordermanagement.exception.ProductUnavailableException;
 import com.nisholas.ordermanagement.exception.ResourceNotFoundException;
 import com.nisholas.ordermanagement.repository.OrderItemRepository;
 import com.nisholas.ordermanagement.repository.OrderRepository;
@@ -34,8 +35,7 @@ public class OrderItemService {
     }
 
     public OrderItemResponse getByOrderItemId(Long id) {
-        OrderItem orderItem = findOrderItem(id);
-        return OrderItemMapper.toOrderItemResponse(orderItem);
+        return OrderItemMapper.toOrderItemResponse(findOrderItem(id));
     }
 
     @Transactional
@@ -44,6 +44,7 @@ public class OrderItemService {
         validateOrderAllowsItemChanges(order);
 
         Product product = findProduct(request.productId());
+        validateProductAvailable(product);
         validateStock(product, request.quantity());
 
         BigDecimal unitPrice = product.getPrice();
@@ -77,6 +78,7 @@ public class OrderItemService {
         restoreOldItem(existingItem);
 
         Product newProduct = findProduct(request.productId());
+        validateProductAvailable(newProduct);
         validateStock(newProduct, request.quantity());
 
         BigDecimal unitPrice = newProduct.getPrice();
@@ -120,6 +122,7 @@ public class OrderItemService {
         restoreOldItem(existingItem);
 
         Product newProduct = findProduct(productId);
+        validateProductAvailable(newProduct);
         validateStock(newProduct, quantity);
 
         BigDecimal unitPrice = newProduct.getPrice();
@@ -180,7 +183,19 @@ public class OrderItemService {
         }
     }
 
+    private void validateProductAvailable(Product product) {
+        if (!product.isActive()) {
+            throw new ProductUnavailableException(
+                    "Product is inactive and cannot be added to an order. Product id: " + product.getId()
+            );
+        }
+    }
+
     private void validateStock(Product product, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
         if (product.getStockQuantity() < quantity) {
             throw new InsufficientStockException(
                     "Insufficient stock for product id: " + product.getId()
