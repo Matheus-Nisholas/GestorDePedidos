@@ -51,17 +51,17 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Produtos podem ser consultados por USER e ADMIN.
-                        .requestMatchers(HttpMethod.GET, "/products/**")
+                        .requestMatchers(HttpMethod.GET, "/products", "/products/**")
                         .hasAnyRole("USER", "ADMIN")
 
                         // Cadastro e manutencao de produtos ficam restritos ao ADMIN.
-                        .requestMatchers(HttpMethod.POST, "/products/**")
+                        .requestMatchers(HttpMethod.POST, "/products", "/products/**")
                         .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/products/**")
+                        .requestMatchers(HttpMethod.PUT, "/products", "/products/**")
                         .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/products/**")
+                        .requestMatchers(HttpMethod.PATCH, "/products", "/products/**")
                         .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/products/**")
+                        .requestMatchers(HttpMethod.DELETE, "/products", "/products/**")
                         .hasRole("ADMIN")
 
                         // Demais recursos exigem apenas usuario autenticado.
