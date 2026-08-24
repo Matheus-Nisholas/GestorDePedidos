@@ -18,6 +18,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -63,14 +64,18 @@ class SecurityIntegrationTest {
     @Test
     void shouldReturnUnauthorizedWhenProtectedEndpointHasNoToken() throws Exception {
         mockMvc.perform(get("/products"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.path").value("/products"));
     }
 
     @Test
     void shouldReturnUnauthorizedWhenTokenIsInvalid() throws Exception {
         mockMvc.perform(get("/products")
                         .header("Authorization", "Bearer token-invalido"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
     }
 
     @Test
@@ -102,7 +107,10 @@ class SecurityIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validProductJson()))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.path").value("/products"));
     }
 
     @Test
